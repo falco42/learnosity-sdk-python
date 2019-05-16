@@ -54,10 +54,12 @@ def cli(ctx, consumer_key, consumer_secret, file,
 @cli.command()
 @click.argument('endpoint_url')
 @click.option('--reference', '-r', 'references',
-               help='`reference` to request (can be used multiple times',
-               multiple=True)
+              help='`reference` to request (can be used multiple times',
+              multiple=True)
+@click.option('--set', '-s', 'do_set', is_flag=True, default=False,
+              help='Send a SET request')
 @click.pass_context
-def data(ctx, endpoint_url, action='get', references=None):
+def data(ctx, endpoint_url, references=None, do_set=False):
     ''' Make a request to Data API.
 
     The endpoint_url can be:
@@ -92,6 +94,10 @@ def data(ctx, endpoint_url, action='get', references=None):
     logger.debug('Reading request json ...')
     data_request = json.load(file)
 
+    action = 'get'
+    if do_set:
+        action = 'set'
+
     if references is not None:
         if 'references' in data_request:
             logger.warning('Overriding `references` from request with references from the command line')
@@ -113,7 +119,12 @@ def data(ctx, endpoint_url, action='get', references=None):
                      # TODO: try to extract an error message from r.json()
                      (r.status_code, endpoint_url, r.text))
         return False
-    response = r.json()
+    try:
+        response = r.json()
+    except Exception as e:
+        logger.error('Exception decoding response (%s): %s' %
+                     (r.text, e))
+        return False
     if not response['meta']['status']:
         logger.error('Incorrect status for request to %s: %s' %
                      (endpoint_url, response['meta']['message']))
@@ -125,7 +136,8 @@ def data(ctx, endpoint_url, action='get', references=None):
     return True
 
 
-def _make_data_security_packet(consumer_key, consumer_secret, domain='localhost'):
+def _make_data_security_packet(consumer_key, consumer_secret,
+                               domain='localhost'):
     return {
         'consumer_key': consumer_key,
         'domain': domain,
