@@ -21,12 +21,15 @@ DEFAULT_API_DATA_VERSION = 'v1'
 @click.option('--consumer-secret', '-S',
               help='Secret associated with the consumer key',
               default='74c5fd430cf1242a527f6223aebd42d30464be22')
+@click.option('--file', '-f', type=click.File('r'),
+              help='File containing the JSON request',
+              default='-')
 @click.option('--log-level', '-l', default='info',
               help='log level')
 @click.option('--requests-log-level', '-L', default='warning',
               help='log level for the HTTP requests')
 @click.pass_context
-def cli(ctx, consumer_key, consumer_secret,
+def cli(ctx, consumer_key, consumer_secret, file,
         log_level='info',
         requests_log_level='warning',
         ):
@@ -34,6 +37,7 @@ def cli(ctx, consumer_key, consumer_secret,
     ctx.ensure_object(dict)
     ctx.obj['consumer_key'] = consumer_key
     ctx.obj['consumer_secret'] = consumer_secret
+    ctx.obj['file'] = file
 
     logging.basicConfig(
         format='%(asctime)s %(levelname)s:%(message)s',
@@ -48,11 +52,12 @@ def cli(ctx, consumer_key, consumer_secret,
 
 
 @cli.command()
-@click.option('--file', '-f', type=click.File('r'),
-              default='-')
 @click.argument('endpoint_url')
+@click.option('--reference', '-r', 'references',
+               help='`reference` to request (can be used multiple times',
+               multiple=True)
 @click.pass_context
-def data(ctx, endpoint_url, file, action='get'):
+def data(ctx, endpoint_url, action='get', references=None):
     ''' Make a request to Data API.
 
     The endpoint_url can be:
@@ -67,9 +72,10 @@ def data(ctx, endpoint_url, file, action='get'):
 
     '''
     ctx.ensure_object(dict)
+    logger = ctx.obj['logger']
     consumer_key = ctx.obj['consumer_key']
     consumer_secret = ctx.obj['consumer_secret']
-    logger = ctx.obj['logger']
+    file = ctx.obj['file']
 
     # TODO: factor this out into a separate function
     if not endpoint_url.startswith('http'):
@@ -85,6 +91,11 @@ def data(ctx, endpoint_url, file, action='get'):
 
     logger.debug('Reading request json ...')
     data_request = json.load(file)
+
+    if references is not None:
+        if 'references' in data_request:
+            logger.warning('Overriding `references` from request with references from the command line')
+        data_request['references'] = references
 
     logger.debug('Sending %s request to %s ...' %
                  (action.upper(), endpoint_url))
