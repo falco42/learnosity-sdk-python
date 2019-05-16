@@ -31,7 +31,14 @@ setuptools.setup(
 
     packages=setuptools.find_packages(exclude=('tests')),
 
+    entry_points={
+        'console_scripts': [
+            'lrn-cli = learnosity_sdk.scripts.lrn_cli:cli',
+        ],
+    },
+
     install_requires=[
+        'click>=7',
         'requests>=2.21.0',
     ],
     tests_require=test_reqs(),

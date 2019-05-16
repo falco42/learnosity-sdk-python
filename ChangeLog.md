@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Example code
 - Add better context to `DataApiException`s
 - Telemetry support
+- lrn-cli command
 
 ### Security fixes:
 - Bump requests to 2.21.0 (CVE-2018-18074)
