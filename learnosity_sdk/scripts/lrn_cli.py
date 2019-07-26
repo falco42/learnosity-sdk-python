@@ -98,7 +98,7 @@ def data(ctx, endpoint_url, references=None, do_set=False):
     if do_set:
         action = 'set'
 
-    if references is not None:
+    if len(references) > 0:
         if 'references' in data_request:
             logger.warning('Overriding `references` from request with references from the command line')
         data_request['references'] = references
