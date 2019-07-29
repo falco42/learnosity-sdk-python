@@ -58,8 +58,10 @@ def cli(ctx, consumer_key, consumer_secret, file,
               multiple=True)
 @click.option('--set', '-s', 'do_set', is_flag=True, default=False,
               help='Send a SET request')
+@click.option('--update', '-s', 'do_update', is_flag=True, default=False,
+              help='Send an UPDATE request')
 @click.pass_context
-def data(ctx, endpoint_url, references=None, do_set=False):
+def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
     ''' Make a request to Data API.
 
     The endpoint_url can be:
@@ -97,6 +99,14 @@ def data(ctx, endpoint_url, references=None, do_set=False):
     action = 'get'
     if do_set:
         action = 'set'
+
+    if do_update:
+        # XXX: Mutually exclusive options, This would be better implemented at the Click level
+        if action is 'get':
+            action = 'update'
+        else:
+            logger.error('Options --set and --update are mutually exclusive')
+            exit(1)
 
     if len(references) > 0:
         if 'references' in data_request:
