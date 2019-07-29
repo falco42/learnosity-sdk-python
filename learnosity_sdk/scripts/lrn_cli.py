@@ -93,7 +93,10 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
 
     security = _make_data_security_packet(consumer_key, consumer_secret)
 
-    logger.info(f'Reading request json from {file}...')
+    if file.isatty():
+        logger.info(f'Reading request json from {file}...')
+    else:
+        logger.debug(f'Reading request json from {file}...')
     data_request = json.load(file)
 
     action = 'get'
