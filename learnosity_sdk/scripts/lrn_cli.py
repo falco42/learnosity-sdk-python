@@ -3,6 +3,7 @@
 import click
 import logging
 import json
+import sys
 
 from learnosity_sdk.request import DataApi
 
@@ -24,12 +25,15 @@ DEFAULT_API_DATA_VERSION = 'v1'
 @click.option('--file', '-f', type=click.File('r'),
               help='File containing the JSON request',
               default='-')
+@click.option('--dump-meta', '-m', is_flag=True, default = False,
+              help='output meta object to stderr')
 @click.option('--log-level', '-l', default='info',
               help='log level')
 @click.option('--requests-log-level', '-L', default='warning',
               help='log level for the HTTP requests')
 @click.pass_context
 def cli(ctx, consumer_key, consumer_secret, file,
+        dump_meta = False,
         log_level='info',
         requests_log_level='warning',
         ):
@@ -38,6 +42,7 @@ def cli(ctx, consumer_key, consumer_secret, file,
     ctx.obj['consumer_key'] = consumer_key
     ctx.obj['consumer_secret'] = consumer_secret
     ctx.obj['file'] = file
+    ctx.obj['dump_meta'] = dump_meta
 
     logging.basicConfig(
         format='%(asctime)s %(levelname)s:%(message)s',
@@ -80,6 +85,7 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
     consumer_key = ctx.obj['consumer_key']
     consumer_secret = ctx.obj['consumer_secret']
     file = ctx.obj['file']
+    dump_meta = ctx.obj['dump_meta']
 
     # TODO: factor this out into a separate function
     if not endpoint_url.startswith('http'):
@@ -118,7 +124,7 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
 
     logger.debug('Sending %s request to %s ...' %
                  (action.upper(), endpoint_url))
-    try: 
+    try:
         r = data_api.request(endpoint_url, security, consumer_secret,
                              data_request, action)
     except Exception as e:
@@ -131,6 +137,7 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
         logger.error('Error %d sending request to %s: %s' %
                      # TODO: try to extract an error message from r.json()
                      (r.status_code, endpoint_url, r.text))
+        _dump_meta(r , dump_meta)
         return False
     try:
         response = r.json()
@@ -138,6 +145,9 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
         logger.error('Exception decoding response (%s): %s' %
                      (r.text, e))
         return False
+
+    _dump_meta(response, dump_meta)
+
     if not response['meta']['status']:
         logger.error('Incorrect status for request to %s: %s' %
                      (endpoint_url, response['meta']['message']))
@@ -147,6 +157,14 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
 
     print(json.dumps(data, indent=True))
     return True
+
+
+def _dump_meta(response, dump_meta):
+    if type(response) == str:
+        response = response.json()
+    if dump_meta and response['meta']:
+        sys.stderr.write(json.dumps(response['meta'], indent=True) + '\n')
+    return response
 
 
 def _make_data_security_packet(consumer_key, consumer_secret,
