@@ -5,6 +5,7 @@ import logging
 import json
 import sys
 
+from requests import Response
 from learnosity_sdk.request import DataApi
 
 
@@ -160,7 +161,7 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
 
 
 def _dump_meta(response, dump_meta):
-    if type(response) == str:
+    if type(response) == Response:
         response = response.json()
     if dump_meta and response['meta']:
         sys.stderr.write(json.dumps(response['meta'], indent=True) + '\n')
