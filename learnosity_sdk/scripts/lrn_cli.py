@@ -138,16 +138,12 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
         logger.error('Error %d sending request to %s: %s' %
                      # TODO: try to extract an error message from r.json()
                      (r.status_code, endpoint_url, r.text))
-        _dump_meta(r , dump_meta)
-        return False
-    try:
-        response = r.json()
-    except Exception as e:
-        logger.error('Exception decoding response (%s): %s' %
-                     (r.text, e))
-        return False
 
-    _dump_meta(response, dump_meta)
+    try:
+        response = decode_response(r, dump_meta)
+    except Exception as e:
+        logger.error('Exception decoding response: %s\nResponse text: %s' % (e, r.text))
+        return False
 
     if not response['meta']['status']:
         logger.error('Incorrect status for request to %s: %s' %
@@ -160,9 +156,9 @@ def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
     return True
 
 
-def _dump_meta(response, dump_meta):
+def decode_response(response, dump_meta=False):
     if type(response) == Response:
-        response = response.json()
+            response = response.json()
     if dump_meta and response['meta']:
         sys.stderr.write(json.dumps(response['meta'], indent=True) + '\n')
     return response
