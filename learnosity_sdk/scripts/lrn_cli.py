@@ -64,7 +64,7 @@ def cli(ctx, consumer_key, consumer_secret, file,
               multiple=True)
 @click.option('--set', '-s', 'do_set', is_flag=True, default=False,
               help='Send a SET request')
-@click.option('--update', '-s', 'do_update', is_flag=True, default=False,
+@click.option('--update', '-u', 'do_update', is_flag=True, default=False,
               help='Send an UPDATE request')
 @click.pass_context
 def data(ctx, endpoint_url, references=None, do_set=False, do_update=False):
