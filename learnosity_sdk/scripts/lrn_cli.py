@@ -182,7 +182,7 @@ def _get_data(endpoint_url, consumer_key, consumer_secret, request, action, logg
             elif type(data) is list:
                 data += new_data
             elif type(data) is dict:
-                data.update(new_dat)
+                data.update(new_data)
             else:
                 raise Exception('Unexpected retun data type: not list or dict')
             logger.debug(f'Got {len(new_data)} new objects')
