@@ -144,7 +144,7 @@ def data(ctx, endpoint_url, references=None,
         return False
 
     try:
-        response = _decode_response(r, dump_meta)
+        response = _decode_response(r, dump_meta, logger)
     except Exception as e:
         logger.error('Exception decoding response: %s\nResponse text: %s' % (e, r.text))
         return False
@@ -203,7 +203,7 @@ def _make_data_security_packet(consumer_key, consumer_secret,
     }
 
 
-def _decode_response(response, dump_meta=False):
+def _decode_response(response, dump_meta=False, logger):
     if type(response) == Response:
         if response.status_code != 200:
             logger.error('Error %d sending request to %s: %s' %
